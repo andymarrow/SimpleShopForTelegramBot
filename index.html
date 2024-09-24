@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SUQ Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         .buy-btn {
             background-color: #10b981;
@@ -72,6 +73,8 @@
         window.onload = async function () {
             await fetchItems();
             loadMoreItems();
+            const tg = window.Telegram.WebApp; // Initialize Telegram Web App
+            tg.ready(); // This should be called when the web app is loaded
         };
 
         // Fetch items from the JSON file
@@ -160,8 +163,20 @@
             checkoutButton.onclick = function () {
                 // Save selected items to localStorage for the checkout page
                 localStorage.setItem('selectedItems', JSON.stringify(selectedItems));
+                // Optionally send data back to the bot
+                sendData();
                 window.location.href = 'checkout.html'; // Update this URL as needed
             };
+        }
+
+        // Function to send data back to the bot
+        function sendData() {
+            const tg = window.Telegram.WebApp; // Ensure tg is defined here
+            const data = {
+                message: "User clicked the button!",
+                // Add any other data you want to send
+            };
+            tg.sendData(JSON.stringify(data));
         }
     </script>
 </body>
