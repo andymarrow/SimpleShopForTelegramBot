@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUQ Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .buy-btn {
+            background-color: #10b981;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .buy-btn:hover {
+            background-color: #0f9d70;
+        }
+
+        .checkout-btn {
+            background-color: #f59e0b;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .checkout-btn:hover {
+            background-color: #d89b0b;
+        }
+
+        .item-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-purple-200 to-blue-200 min-h-screen">
+    <!-- Checkout section -->
+    <div class="p-6 text-center">
+        <button id="checkoutButton" class="checkout-btn px-6 py-2 rounded-md hidden">Checkout</button>
+    </div>
+
+    <!-- Search Bar Section -->
+    <div class="p-6 text-center">
+        <input type="text" id="searchBar" placeholder="Search by item name or description..."
+            class="w-full md:w-1/2 p-2 border rounded-md" oninput="filterItems()" />
+    </div>
+
+    <!-- Cards section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6" id="itemContainer">
+        <!-- Items will be dynamically inserted here -->
+    </div>
+
+    <!-- Load More button -->
+    <div class="flex justify-center my-6">
+        <button id="loadMore" class="mt-4 px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700"
+            onclick="loadMoreItems()">Load More</button>
+    </div>
+
+    <script>
+        const itemsPerPage = 10;
+        let currentPage = 1;
+        let allItems = [];
+        let displayedItems = [];
+        let selectedItems = {};
+
+        // Load initial items
+        window.onload = async function () {
+            await fetchItems();
+            loadMoreItems();
+        };
+
+        // Fetch items from the JSON file
+        async function fetchItems() {
+            const response = await fetch('items.json');
+            allItems = await response.json();
+            displayedItems = allItems; // Initialize displayed items with all items
+        }
+
+        // Load more items function
+        function loadMoreItems() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = currentPage * itemsPerPage;
+
+            const itemsToDisplay = displayedItems.slice(startIndex, endIndex);
+
+            // Append items to the container
+            const container = document.getElementById('itemContainer');
+            itemsToDisplay.forEach(item => {
+                const itemHTML = `
+                    <div class="item-card bg-white shadow-lg rounded-lg overflow-hidden transition-transform duration-300" data-item="${item.name}" data-price="${item.price}">
+                        <img class="w-full h-48 object-cover mb-4" src="${item.image}" alt="${item.name}">
+                        <div class="p-4">
+                            <h2 class="text-xl font-semibold mb-2">${item.name}</h2>
+                            <p class="text-gray-600 mb-4">${item.description}</p>
+                            <button class="buy-btn px-4 py-2 rounded-md w-full" onclick="handleBuyClick(this)">Buy</button>
+                        </div>
+                    </div>`;
+                container.insertAdjacentHTML('beforeend', itemHTML);
+            });
+
+            currentPage++;
+
+            if (endIndex >= displayedItems.length) {
+                document.getElementById('loadMore').classList.add('hidden');
+            }
+        }
+
+        // Filter items by search query
+        function filterItems() {
+            const query = document.getElementById('searchBar').value.toLowerCase();
+            currentPage = 1; // Reset page for new search
+            displayedItems = allItems.filter(item =>
+                item.name.toLowerCase().includes(query) ||
+                item.description.toLowerCase().includes(query)
+            );
+
+            // Clear the item container and load new items
+            document.getElementById('itemContainer').innerHTML = '';
+            loadMoreItems();
+
+            // Show or hide the load more button
+            if (displayedItems.length === 0) {
+                document.getElementById('loadMore').classList.add('hidden');
+            } else {
+                document.getElementById('loadMore').classList.remove('hidden');
+            }
+        }
+
+        // Handle "Buy" click, update checkout
+        function handleBuyClick(button) {
+            const itemCard = button.closest('.item-card');
+            const itemName = itemCard.getAttribute('data-item');
+            const itemPrice = parseFloat(itemCard.getAttribute('data-price'));
+            const itemImage = itemCard.querySelector('img').src; // Get the image URL
+            const itemDescription = itemCard.querySelector('p').innerText; // Get the description
+
+            // Create an item object
+            const item = {
+                name: itemName,
+                price: itemPrice,
+                image: itemImage,
+                description: itemDescription,
+                quantity: (selectedItems[itemName]?.quantity || 0) + 1
+            };
+
+            // Update selected items
+            selectedItems[itemName] = item; // Store the full item object
+
+            // Update the checkout button visibility
+            const checkoutButton = document.getElementById('checkoutButton');
+            checkoutButton.classList.remove('hidden');
+            checkoutButton.innerText = `Checkout (${Object.keys(selectedItems).length})`;
+
+            // Navigate to checkout page when checkout button is clicked
+            checkoutButton.onclick = function () {
+                // Save selected items to localStorage for the checkout page
+                localStorage.setItem('selectedItems', JSON.stringify(selectedItems));
+                window.location.href = 'checkout.html'; // Update this URL as needed
+            };
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - SUQ Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .checkout-btn {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        }
+
+        .card {
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center gradient-bg">
+        <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
+            <h1 class="text-3xl font-bold text-center text-gray-800">Your Cart</h1>
+            <div id="cartItems" class="mt-4 space-y-4">
+                <!-- Items will be dynamically inserted here -->
+            </div>
+            <div class="mt-4 border-t pt-4">
+                <p class="text-xl font-semibold">Total: <span id="totalAmount" class="text-orange-600">$0.00</span></p>
+                <button class="checkout-btn px-4 py-2 rounded mt-4 w-full hover:bg-orange-600 transition">Proceed to
+                    Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedItems = {};
+        const totalAmountElement = document.getElementById('totalAmount');
+
+        // Function to load selected items from localStorage
+        function loadSelectedItems() {
+            const itemsFromStorage = localStorage.getItem('selectedItems');
+            if (itemsFromStorage) {
+                selectedItems = JSON.parse(itemsFromStorage);
+            }
+            populateCartItems();
+        }
+
+        // Populate cart items in the checkout page
+        function populateCartItems() {
+            const cartItemsContainer = document.getElementById('cartItems');
+            cartItemsContainer.innerHTML = ''; // Clear previous items
+
+            let totalAmount = 0;
+
+            Object.keys(selectedItems).forEach(itemName => {
+                const item = selectedItems[itemName];
+                const itemHTML = `
+                    <div class="card bg-white p-4 shadow rounded flex items-center justify-between">
+                        <div class="flex items-center">
+                            <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded mr-4">
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-800">${item.name}</h2>
+                                <p class="text-gray-600">Price: $${item.price}</p>
+                                <div class="flex items-center mt-2">
+                                    <button class="px-2 py-1 bg-gray-200 rounded" onclick="changeQuantity('${itemName}', -1)">-</button>
+                                    <span class="mx-2 text-lg">${item.quantity}</span>
+                                    <button class="px-2 py-1 bg-gray-200 rounded" onclick="changeQuantity('${itemName}', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="text-red-500 hover:text-red-600 transition" onclick="removeItem('${itemName}')">Remove</button>
+                    </div>`;
+                cartItemsContainer.insertAdjacentHTML('beforeend', itemHTML);
+                totalAmount += item.price * item.quantity; // Update total amount
+            });
+
+            totalAmountElement.textContent = `$${totalAmount.toFixed(2)}`; // Display total amount
+        }
+
+        // Change quantity of an item
+        function changeQuantity(itemName, change) {
+            const item = selectedItems[itemName];
+            item.quantity += change;
+
+            // Ensure quantity doesn't go below 1
+            if (item.quantity <= 0) {
+                removeItem(itemName);
+                return;
+            }
+
+            // Update localStorage and re-populate cart
+            localStorage.setItem('selectedItems', JSON.stringify(selectedItems));
+            populateCartItems();
+        }
+
+        // Remove an item from the cart
+        function removeItem(itemName) {
+            delete selectedItems[itemName]; // Remove item from selectedItems
+            localStorage.setItem('selectedItems', JSON.stringify(selectedItems)); // Update localStorage
+            populateCartItems(); // Re-populate cart items
+        }
+
+        // Proceed to payment logic
+        function proceedToPayment() {
+            // Implement payment logic here
+            alert('Proceeding to payment...');
+        }
+
+        // Load selected items on page load
+        window.onload = loadSelectedItems;
+    </script>
+</body>
+
+</html>
